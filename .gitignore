@@ -1,3 +1,5 @@
 .vs/
-PlantDbConv/bin/
-PlantDbConv/obj/
+*/bin/
+*/obj/
+packages/
+*.user
