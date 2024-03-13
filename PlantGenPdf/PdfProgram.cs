@@ -20,12 +20,21 @@ namespace PlantGenPdf
         class Soort
         {
             public string naamN, naamW;
-            public int aantal = 0;
+        }
+
+        class Voorkomen
+        {
+            public string srn;
+            public Soort soort;
+            DateTime eerst, laatst;
+            public int aantal;
         }
 
         private Dictionary<string, string> soortVervanging = new Dictionary<string, string>();
         private Dictionary<string, Soort> soorten = new Dictionary<string, Soort>();
         private Dictionary<string, Gebied> gebieden = new Dictionary<string, Gebied>();
+        // key is used for sorting
+        private Dictionary<string, Voorkomen> voorkomens = new Dictionary<string, Voorkomen>();
 
         void LaadGebieden(OleDbConnection conn)
         {
@@ -112,7 +121,7 @@ namespace PlantGenPdf
             return soortNr;
         }
 
-        void LaadWaarnemingen(OleDbConnection conn)
+        void LaadWaarnemingen(OleDbConnection conn, int kmx, int kmy)
         {
             int cnt = 0;
             HashSet<string> onbekendGebied = new HashSet<string>();
@@ -140,7 +149,6 @@ namespace PlantGenPdf
                 {
                     Console.WriteLine("onbekende soort {0}", soortNr);
                 }
-                s.aantal++;
 
                 string spCode = (string)reader.GetValue(1);
                 spCode = spCode.Trim().ToLower();
@@ -199,7 +207,9 @@ namespace PlantGenPdf
 
             LaadSoorten(conn);
             LaadGebieden(conn);
-            LaadWaarnemingen(conn);
+
+            int kmx = 94, kmy = 453;
+            LaadWaarnemingen(conn,kmx,kmy);
 
             QuestPDF.Settings.License = LicenseType.Community;
 
