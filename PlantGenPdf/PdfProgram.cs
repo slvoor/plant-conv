@@ -26,15 +26,13 @@ namespace PlantGenPdf
         {
             public string srn;
             public Soort soort;
-            DateTime eerst, laatst;
+            public DateTime eerst, laatst;
             public int aantal;
         }
 
         private Dictionary<string, string> soortVervanging = new Dictionary<string, string>();
         private Dictionary<string, Soort> soorten = new Dictionary<string, Soort>();
         private Dictionary<string, Gebied> gebieden = new Dictionary<string, Gebied>();
-        // key is used for sorting
-        private Dictionary<string, Voorkomen> voorkomens = new Dictionary<string, Voorkomen>();
 
         void LaadGebieden(OleDbConnection conn)
         {
@@ -121,8 +119,10 @@ namespace PlantGenPdf
             return soortNr;
         }
 
-        void LaadWaarnemingen(OleDbConnection conn, int kmx, int kmy)
+        SortedDictionary<string, Voorkomen> BepaalVoorkomens(OleDbConnection conn, int kmx, int kmy)
         {
+            // key is used for sorting
+            SortedDictionary<string, Voorkomen> voorkomens = new SortedDictionary<string, Voorkomen>();
             int cnt = 0;
             HashSet<string> onbekendGebied = new HashSet<string>();
             OleDbCommand cmd = new OleDbCommand("Select SOORT_NR, SP_CODE, Datum1, Datum2 FROM WZTM;", conn);
@@ -164,12 +164,42 @@ namespace PlantGenPdf
                     continue;
                 }
 
+                int scale = 1000;
+                if (g.x1 >= kmx * scale && g.x2 <= (kmx+1) * scale
+                && g.y1 >= kmy * scale && g.y2 <= (kmy+1) * scale)
+                {
+                    // inside
+                    ; // OK
+                }
+                else
+                {
+                    continue; // skip
+                }
+
                 DateTime d1 = (DateTime)reader.GetValue(2);
                 DateTime d2 = (DateTime)reader.GetValue(3);
 
                 int soortNummer = int.Parse(soortNr);
 
+                string sleutel = s.naamN;
+
+                Voorkomen voorkomen;
+                if (voorkomens.TryGetValue(sleutel,out voorkomen)==false)
+                {
+                    voorkomen = new Voorkomen();
+                    voorkomen.soort = s;
+                    voorkomen.srn = soortNr;
+                    voorkomen.eerst = d1;
+                    voorkomen.laatst = d2;
+                    voorkomens.Add(sleutel, voorkomen);
+                } else
+                {
+                    if (d1 < voorkomen.eerst) voorkomen.eerst = d1;
+                    if (d2 > voorkomen.laatst) voorkomen.laatst = d2;
+                }
+                voorkomen.aantal++;
             }
+            return voorkomens;
         }
 
         static void Main(string[] args)
@@ -179,6 +209,7 @@ namespace PlantGenPdf
             if (ret == 1)
             {
                 Console.WriteLine("Needed parameters not specified");
+                Console.WriteLine("--in database.mdb --out output.pdf");
             }
             Console.WriteLine("End of program");
             //Console.ReadLine();
@@ -209,7 +240,7 @@ namespace PlantGenPdf
             LaadGebieden(conn);
 
             int kmx = 94, kmy = 453;
-            LaadWaarnemingen(conn,kmx,kmy);
+            var voorkomens = BepaalVoorkomens(conn,kmx,kmy);
 
             QuestPDF.Settings.License = LicenseType.Community;
 
@@ -246,6 +277,23 @@ namespace PlantGenPdf
                                     header.Cell().Element(StyleTH).Text("#WRN");
 
                                 });
+
+                                uint rowix = 1;
+
+                                foreach (var kv in voorkomens)
+                                {
+                                    Voorkomen voorkomen = kv.Value;
+                                    table.Cell().Row(rowix).Column(1).Element(StyleTD).Text(voorkomen.srn);
+                                    table.Cell().Element(StyleTD).Text(voorkomen.soort.naamN);
+                                    table.Cell().Element(StyleTD).Text(voorkomen.soort.naamW);
+                                    table.Cell().Element(StyleTD).Text(voorkomen.eerst.Year.ToString());
+                                    table.Cell().Element(StyleTD).Text(voorkomen.laatst.Year.ToString());
+                                    table.Cell().Element(StyleTD).Text(voorkomen.aantal);
+                                    rowix++;
+                                    Console.WriteLine(kv.Key);
+                                }
+
+                                /*
                                 table.Cell().Row(1).Column(1).Element(StyleTD).Text("717");
                                 table.Cell().Element(StyleTD).Text("Aardaker");
                                 table.Cell().Element(StyleTD).Text("Lathyrus tuberosus");
@@ -259,14 +307,17 @@ namespace PlantGenPdf
                                 table.Cell().Element(StyleTD).Text("2003");
                                 table.Cell().Element(StyleTD).Text("2021");
                                 table.Cell().Element(StyleTD).Text("3");
+                                */
 
-                                
+
 
                             });
                         });
                 });
             })
             .GeneratePdf(outputfile);
+
+            Console.WriteLine("Generated " + outputfile);
 
             return 0;
         }
