@@ -212,8 +212,9 @@ namespace PlantGenPdf
                 Console.WriteLine("--in database.mdb --out output.pdf");
             }
             Console.WriteLine("End of program");
-            //Console.ReadLine();
+            Console.ReadLine();
         }
+
         int Run(string[] args)
         {
             string srcdbfile = "";
@@ -244,6 +245,16 @@ namespace PlantGenPdf
 
             QuestPDF.Settings.License = LicenseType.Community;
 
+            // wat statistieken
+            Console.WriteLine("Aantal soorten: " + voorkomens.Count);
+            int wrnCnt = 0;
+            foreach (var kv in voorkomens)
+            {
+                wrnCnt += kv.Value.aantal;
+            }
+            Console.WriteLine("Aantal waarnemingen: " + wrnCnt);
+
+
             Document.Create(container =>
             {
                 container.Page(page =>
@@ -253,6 +264,7 @@ namespace PlantGenPdf
                         .DefaultTextStyle(style => style.FontSize(10) )
                         .Column(col =>
                         {
+                            col.Item().Text("kmhok x="+kmx+" y="+kmy+" soorten="+voorkomens.Count+" wrn="+wrnCnt);
                             col.Item()
                             .Table(table =>
                             {
