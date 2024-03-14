@@ -288,27 +288,10 @@ namespace PlantGenPdf
                                     table.Cell().Element(StyleTD).Text(voorkomen.soort.naamW);
                                     table.Cell().Element(StyleTD).Text(voorkomen.eerst.Year.ToString());
                                     table.Cell().Element(StyleTD).Text(voorkomen.laatst.Year.ToString());
-                                    table.Cell().Element(StyleTD).Text(voorkomen.aantal);
+                                    table.Cell().Element(StyleTD).Text(voorkomen.aantal.ToString());
                                     rowix++;
                                     Console.WriteLine(kv.Key);
                                 }
-
-                                /*
-                                table.Cell().Row(1).Column(1).Element(StyleTD).Text("717");
-                                table.Cell().Element(StyleTD).Text("Aardaker");
-                                table.Cell().Element(StyleTD).Text("Lathyrus tuberosus");
-                                table.Cell().Element(StyleTD).Text("2003");
-                                table.Cell().Element(StyleTD).Text("2021");
-                                table.Cell().Element(StyleTD).Text("3");
-
-                                table.Cell().Row(2).Column(1).Element(StyleTD).Text("529");
-                                table.Cell().Element(StyleTD).Text("aardbei, Bos-");
-                                table.Cell().Element(StyleTD).Text("Fragaria vesca");
-                                table.Cell().Element(StyleTD).Text("2003");
-                                table.Cell().Element(StyleTD).Text("2021");
-                                table.Cell().Element(StyleTD).Text("3");
-                                */
-
 
 
                             });
